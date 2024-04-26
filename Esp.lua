@@ -71,6 +71,7 @@ function Module:Remove()
     self.Connections['ParentConnection']:Disconnect()
 
     self.Drawing:Remove()
+    print(self.Drawing)
     Module.Groups[self.Group].Content[self.Key] = nil
 end
 
