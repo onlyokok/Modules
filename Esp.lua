@@ -72,7 +72,7 @@ function Module:Remove()
     end
 
     self.Drawing:Remove()
-    table.remove(Module.Groups[self.Group].Content, self.Key)
+    Module.Groups[self.Group].Content[self.Key] = nil
 end
 
 function Module.SetGroupVisibility(Group, Value)
