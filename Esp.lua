@@ -67,8 +67,9 @@ function Module:Setup()
 end
 
 function Module:Remove()
-    self.Connections['UpdateConnection']:Disconnect()
-    self.Connections['ParentConnection']:Disconnect()
+    for _,Connection in next, self.Connections do
+        Connection:Disconnect()
+    end
 
     self.Drawing:Remove()
     print(self.Drawing)
