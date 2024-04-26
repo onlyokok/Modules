@@ -83,7 +83,7 @@ function Module.SetGroupColor(Group, Value)
     Module.Groups[Group].Color = Value
 end
 
-function Module.Unload()
+function Module.RemoveAllInstances()
     for _,Group in next, Module.Groups do
         for _,Value in next, Group.Content do
             Value:Remove()
