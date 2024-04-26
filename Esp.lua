@@ -1,82 +1,52 @@
-local GetService = game.GetService;
-
-local Services = {
-    UserInputService = GetService(game, 'UserInputService'),
-    ReplicatedStorage = GetService(game, 'ReplicatedStorage'),
-    TweenService = GetService(game, 'TweenService'),
-    ScriptContext = GetService(game, 'ScriptContext'),
-    RunService = GetService(game, 'RunService'),
-    Players = GetService(game, 'Players'),
-    HttpService = GetService(game, 'HttpService'),
-}
-
-local Module = {
-    Settings = {
-        Enabled = true,
-        DistanceText = true,
-        Range = 20000,
-        BaseColor = Color3.fromRGB(255, 255, 255)
-    },
-    Groups = {}
-}
-
+local Module = { Settings = { Enabled = true , Range = 9e9 } , Groups = {   } }
 Module.__index = Module
 
-function Module.new(Group : string , Instance : Instance , Text : string)
+function Module.new(Options)
     local self = setmetatable({
-        Group = Group or 'All',
-        Instance = Instance,
-        Drawing = Drawing.new('Text'),
-        Properties = { Enabled = true , Color = Module.Settings.BaseColor , Text = Text , Size = 15 , Font = 1 },
-        Connections = {}
-    } , Module)
+        Group = Options.Group or 'All',
+        Instance = Options.Instance,
+        Text = Options.Text or Options.Instance.Name,
+        Connections = {  }
+    }, Module)
 
+    self.Drawing = Drawing.new('Text')
     self.Drawing.Center = true
     self.Drawing.Outline = true
+    self.Drawing.Font = 1
+    self.Drawing.Size = 15
 
     if not Module.Groups[self.Group] then
-        Module.Groups[self.Group] = {}
+        Module.Groups[self.Group] = {
+            Enabled = true,
+            Color = Color3.fromRGB(255, 255, 255),
+            Content = {  }
+        }
     end
 
-    self.Key = #Module.Groups[self.Group] + 1
+    self.Key = game:GetService('HttpService'):GenerateGUID(false)
+    Module.Groups[self.Group].Content[self.Key] = self
 
-    table.insert(Module.Groups[self.Group], self)
+    self:Setup()
+
     return self
 end
 
-function Module.SetGroupVisibility(Group : string , Value : boolean)
-    for _,Esp in next, Module.Groups[Group] do
-        Esp.Properties.Enabled = Value
-    end
-end
+function Module:Setup()
+    self.Connections['UpdateConnections'] = game:GetService('RunService').RenderStepped:Connect(function()
+        local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(self.Instance:GetPivot().Position)
+        local Magnitude = math.round((game:GetService('Players').LocalPlayer.Character:GetPivot().Position - self.Instance:GetPivot().Position).Magnitude)
 
-function Module.SetGroupColor(Group : string , Value : Color3)
-    for _,Esp in next, Module.Groups[Group] do
-        Esp.Properties.Color = Value
-    end
-end
-
-function Module:SetupUpdateConnection()
-    self.Connections['UpdateConnection'] = Services.RunService.RenderStepped:Connect(function()
-        local Vector, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(self.Instance:GetPivot().Position);
-        local Magnitude = math.round((Services.Players.LocalPlayer.Character:GetPivot().Position - self.Instance:GetPivot().Position).Magnitude) or 0
-
-        self.Drawing.Position = Vector2.new(Vector.X , Vector.Y);
-        self.Drawing.Color = self.Properties.Color
-        self.Drawing.Size = self.Properties.Size
-        self.Drawing.Font = self.Properties.Font
-
-        if Module.Settings.DistanceText then
-            self.Drawing.Text = `{self.Properties.Text} [{Magnitude}]`
-        else
-            self.Drawing.Text = self.Properties.Text
-        end
+        self.Drawing.Position = Vector2.new(Vector.X, Vector.Y)
+        self.Drawing.Color = Module.Groups[self.Group].Color
+        self.Drawing.Text = `{self.Text} [{Magnitude}]`
 
         if Module.Settings.Enabled then
-            if self.Properties.Enabled then
-                if OnScreen then
-                    if Magnitude < Module.Settings.Range then
+            if Module.Groups[self.Group].Enabled then
+                if Magnitude < Module.Settings.Range then
+                    if OnScreen then
                         self.Drawing.Visible = true
+                    else
+                        self.Drawing.Visible = false
                     end
                 else
                     self.Drawing.Visible = false
@@ -88,36 +58,37 @@ function Module:SetupUpdateConnection()
             self.Drawing.Visible = false
         end
     end)
-end
 
-function Module:SetupParentConnection()
     self.Connections['ParentConnection'] = self.Instance:GetPropertyChangedSignal('Parent'):Connect(function()
         if self.Instance.Parent == nil then
-            self:Remove();
+            self:Remove()
         end
     end)
 end
 
 function Module:Remove()
     for _,Connection in next, self.Connections do
-        Connection:Disconnect();
+        Connection:Disconnect()
     end
 
-    self.Drawing:Remove();
-    table.remove(Module.Groups[self.Group] , self.Key);
+    self.Drawing:Remove()
+    table.remove(Module.Groups[self.Group].Content, self.Key)
+end
+
+function Module.SetGroupVisibility(Group, Value)
+    Module.Groups[Group].Enabled = Value
+end
+
+function Module.SetGroupColor(Group, Value)
+    Module.Groups[Group].Color = Value
 end
 
 function Module.Unload()
     for _,Group in next, Module.Groups do
-        for _,Table in next, Group do
-            Table:Remove();
+        for _,Value in next, Group.Content do
+            Value:Remove()
         end
     end
-end
-
-function Module:Setup()
-    self:SetupUpdateConnection();
-    self:SetupParentConnection();
 end
 
 return Module
