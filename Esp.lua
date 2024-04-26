@@ -6,10 +6,10 @@ function Module.new(Options)
         Group = Options.Group or 'All',
         Instance = Options.Instance,
         Text = Options.Text or Options.Instance.Name,
+        Drawing = Drawing.new('Text'),
         Connections = {  }
     }, Module)
 
-    self.Drawing = Drawing.new('Text')
     self.Drawing.Center = true
     self.Drawing.Outline = true
     self.Drawing.Font = 1
