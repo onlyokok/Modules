@@ -67,9 +67,8 @@ function Module:Setup()
 end
 
 function Module:Remove()
-    for _,Connection in next, self.Connections do
-        Connection:Disconnect()
-    end
+    self.Connections['UpdateConnection']:Disconnect()
+    self.Connections['ParentConnection']:Disconnect()
 
     self.Drawing:Remove()
     Module.Groups[self.Group].Content[self.Key] = nil
