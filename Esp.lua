@@ -77,21 +77,15 @@ function Module:Remove()
 end
 
 function Module.SetGroupVisibility(Group, Value)
-    if not Module.Groups[Group] then
-        Module.Groups[Group] = {
-            Enabled = Value,
-            Color = Color3.fromRGB(255, 255, 255),
-            Content = {  }
-        }
+    if Module.Groups[Group] then
+        Module.Groups[Group].Enabled = Value
     end
 end
 
 function Module.SetGroupColor(Group, Value)
-    Module.Groups[Group] = {
-            Enabled = true,
-            Color = Value,
-            Content = {  }
-        }
+    if Module.Groups[Group] then
+        Module.Groups[Group].Color = Value
+    end
 end
 
 function Module.RemoveAllInstances()
